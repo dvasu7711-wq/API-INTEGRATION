@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Intelligence Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+       .container {
+            width: 100%;
+            max-width: 900px;
+            color: white;
+            text-align: center;
+        }
+       .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 5px;
+        }
+       .header p {
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        #datetime {
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+       .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+       .search-box input {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+        }
+       .search-box button {
+            padding: 15px 25px;
+            border: none;
+            background: #4db8ff;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+       .search-box button:hover {
+            background: #3399ff;
+        }
+       .weather-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 20px;
+        }
+       .weather-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+       .temp {
+            font-size: 3.5rem;
+            font-weight: bold;
+        }
+       .details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+       .detail-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+       .detail-box h3 {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+       .detail-box p {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ Weather Intelligence Dashboard</h1>
+            <p>Live Weather Data Using OpenWeather API</p>
+            <p id="datetime"></p>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="cityInput" placeholder="Search City...">
+            <button onclick="getWeather()">Search</button>
+        </div>
+
+        <div class="weather-card">
+            <div class="weather-icon" id="icon">🌤️</div>
+            <h2 id="cityName">Search a City</h2>
+            <div class="temp" id="temp">--°C</div>
+            <p id="description">Weather Condition</p>
+        </div>
+
+        <div class="details">
+            <div class="detail-box">
+                <h3>🌡️ Feels Like</h3>
+                <p id="feelsLike">--</p>
+            </div>
+            <div class="detail-box">
+                <h3>💧 Humidity</h3>
+                <p id="humidity">--</p>
+            </div>
+            <div class="detail-box">
+                <h3>💨 Wind Speed</h3>
+                <p id="windSpeed">--</p>
+            </div>
+            <div class="detail-box">
+                <h3>☁️ Weather Status</h3>
+                <p id="status">--</p>
+            </div>
+            <div class="detail-box">
+                <h3>💡 Advice</h3>
+                <p id="advice">--</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ikkada nee OpenWeather API key pettali
+        const API_KEY = "042aa69c446bcac0d02fa761663c45c4"; 
+
+        // Live time update
+        function updateDateTime() {
+            document.getElementById('datetime').innerText = new Date().toLocaleString();
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // Enter nokkite search avvali
+        document.getElementById('cityInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') getWeather();
+        });
+
+        async function getWeather() {
+            const city = document.getElementById('cityInput').value;
+            if (!city) {
+                alert('Please enter a city name');
+                return;
+            }
+
+            const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('City not found');
+                
+                const data = await response.json();
+                
+                // Data ni page lo pettadam
+                document.getElementById('cityName').innerText = data.name;
+                document.getElementById('temp').innerText = Math.round(data.main.temp) + '°C';
+                document.getElementById('description').innerText = data.weather[0].description;
+                document.getElementById('feelsLike').innerText = Math.round(data.main.feels_like) + '°C';
+                document.getElementById('humidity').innerText = data.main.humidity + '%';
+                document.getElementById('windSpeed').innerText = data.wind.speed + ' m/s';
+                document.getElementById('status').innerText = data.weather[0].main;
+                
+                // Simple advice
+                let advice = "Have a nice day!";
+                if (data.main.temp > 35) advice = "It's hot! Stay hydrated";
+                else if (data.main.temp < 15) advice = "It's cold! Wear warm clothes";
+                else if (data.weather[0].main === "Rain") advice = "Carry an umbrella";
+                document.getElementById('advice').innerText = advice;
+
+                // Icon change
+                const iconMap = {
+                    'Clear': '☀️',
+                    'Clouds': '☁️',
+                    'Rain': '🌧️',
+                    'Drizzle': '🌦️',
+                    'Thunderstorm': '⛈️',
+                    'Snow': '❄️',
+                    'Mist': '🌫️'
+                };
+                document.getElementById('icon').innerText = iconMap[data.weather[0].main] || '🌤️';
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
